@@ -251,6 +251,41 @@ Mimir_setup.exe
 
 ---
 
+## Fase 9 — Dream Dashboard (Isometrisk by-kart) ⬜
+
+**Mål:** Et visuelt dashboard der hele Mimir-verdenen er en norrøn by sett ovenfra — hver modul er en bygning, status vises live på kartet.
+
+**Inspirasjon:** Bryan Valdes / #openclaw — isometrisk agent-by med Hermes HQ, Forge Labs, Hunter Station.
+
+**Konsept:**
+```
+Nattlig norrøn festning, fugleperspektiv:
+  Mimir HQ        → stortårn / mead hall (sentrum)
+  Voice/Wake      → vakttårn med fakkel
+  Vision          → utkikkspost
+  Memory/Honcho   → runestein-arkiv / bibliotek
+  Work Mode       → smedja med glødende ild
+  Hermes Plugin   → smiehus (Forge)
+```
+
+**Hver bygning:**
+- Viser live status-badge (● Online / ○ Idle / ⚡ Working)
+- Er klikkbar → åpner detalj-panel for den modulen
+- Lyser opp / animeres når aktiv
+
+**Teknisk tilnærming:**
+- [ ] Generer isometrisk norrøn by-art med Midjourney/Stable Diffusion
+- [ ] React-komponent: statisk PNG bakgrunn + absolutt-posisjonerte overlays
+- [ ] Klikk-soner per bygning (posisjonerte `<div>`er)
+- [ ] WebSocket-events oppdaterer status-badges live
+- [ ] Klikk → modal/side-panel per modul
+- [ ] Ny route `#/city` eller `#/world`
+
+**Forutsetning:** Fase 2 (React UI) ferdig.
+**Estimat:** ~1 uke for MVP etter at kunsten er klar.
+
+---
+
 ## Backlog / Fremtidige ideer
 
 - **SOUL.md-galleri** — community-bidragte identiteter (pirat, akademiker, militær, etc.)
