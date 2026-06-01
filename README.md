@@ -1,4 +1,4 @@
-# Mimir
+# Mimir Agent
 
 A local-first AI voice assistant with a Norse soul.
 

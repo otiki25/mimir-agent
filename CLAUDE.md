@@ -1,4 +1,4 @@
-# CLAUDE.md — Mimir project
+# CLAUDE.md — Mimir Agent
 
 > Read this first. Everything needed to work on this codebase is here.
 
