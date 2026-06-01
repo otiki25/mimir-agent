@@ -70,7 +70,16 @@ async def _on_tool_call(event_data: dict) -> None:
     await broadcast("tool_call", event_data)
 
 
+async def _on_permission_request(tool_name: str, description: str, request_id: str) -> None:
+    await broadcast("permission_request", {
+        "tool": tool_name,
+        "description": description,
+        "request_id": request_id,
+    })
+
+
 brain.set_tool_callback(_on_tool_call)
+brain.set_permission_callback(_on_permission_request)
 
 # ── Vision watcher ────────────────────────────────────────────────────────────
 
@@ -269,6 +278,16 @@ async def _handle_client_message(ws: WebSocket, msg: dict) -> None:
                 else:
                     await _set_state("idle")
 
+        elif action == "permission_response":
+            brain.grant_permission(
+                request_id=msg.get("request_id", ""),
+                allow=msg.get("allow", False),
+                permanent=msg.get("permanent", False),
+            )
+
+        elif action == "command":
+            await _handle_command(ws, msg.get("command", ""), msg.get("args", ""))
+
         elif action == "clear_history":
             brain.clear_history()
             await ws.send_text(json.dumps({"event": "history_cleared", "ts": datetime.now().isoformat()}))
@@ -294,6 +313,125 @@ async def _handle_client_message(ws: WebSocket, msg: dict) -> None:
             }))
         except Exception:
             pass
+
+
+_COMMANDS = {
+    "clear":   "Clear conversation history",
+    "goal":    "Set a session goal — injected into every prompt",
+    "steer":   "Redirect focus for the rest of the session",
+    "btw":     "Add background context without generating a response",
+    "compact": "Force-compress conversation history to a summary",
+    "memory":  "Show MEMORY.md contents",
+    "tools":   "Show or change tool permissions",
+    "voice":   "Toggle TTS on/off",
+    "mic":     "Toggle microphone on/off",
+    "vision":  "Toggle webcam vision on/off",
+    "sleep":   "Put Mimir to sleep",
+    "help":    "List available commands",
+}
+
+
+async def _handle_command(ws: WebSocket, cmd: str, args: str) -> None:
+    cmd = cmd.strip().lower().lstrip("/")
+
+    async def reply(message: str, data: dict | None = None) -> None:
+        await ws.send_text(json.dumps({
+            "event": "command_result",
+            "data": {"command": cmd, "message": message, **(data or {})},
+            "ts": datetime.now().isoformat(),
+        }))
+
+    if cmd == "clear":
+        brain.clear_history()
+        await reply("Conversation cleared.")
+
+    elif cmd == "goal":
+        if args:
+            brain.set_goal(args)
+            await reply(f"Goal set: {args}")
+        else:
+            current = brain._goal or "(none)"
+            await reply(f"Current goal: {current}")
+
+    elif cmd == "steer":
+        if args:
+            brain.set_steering(args)
+            await reply(f"Steering: {args}")
+        else:
+            current = brain._steering or "(none)"
+            await reply(f"Current steering: {current}")
+
+    elif cmd == "btw":
+        if args:
+            brain.add_context(args)
+            await reply(f"Context noted: {args}")
+        else:
+            await reply("Usage: /btw <background context>")
+
+    elif cmd == "compact":
+        result = await brain.force_compress()
+        await reply(result)
+
+    elif cmd == "memory":
+        contents = brain.get_memory_contents()
+        await reply(contents, {"memory": contents})
+
+    elif cmd == "tools":
+        if args:
+            parts = args.split()
+            if len(parts) == 2:
+                tool_name, level = parts
+                ok = brain.set_tool_permission(tool_name, level)
+                if ok:
+                    await reply(f"Permission for '{tool_name}' set to '{level}'.")
+                else:
+                    await reply(f"Unknown tool or level: '{tool_name}' '{level}'. Levels: always / ask / never")
+            else:
+                await reply("Usage: /tools <tool_name> <always|ask|never>")
+        else:
+            perms = brain.get_tool_permissions()
+            lines = "\n".join(f"  {k}: {v}" for k, v in perms.items())
+            await reply(f"Tool permissions:\n{lines}", {"permissions": perms})
+
+    elif cmd == "voice":
+        tts.enabled = not getattr(tts, "enabled", True)
+        state = "on" if tts.enabled else "off"
+        await reply(f"TTS {state}.")
+        await broadcast("voice_toggle", {"enabled": tts.enabled})
+
+    elif cmd == "mic":
+        # Delegate to frontend — backend just broadcasts the toggle
+        await broadcast("mic_toggle_request", {})
+        await reply("Mic toggle sent to UI.")
+
+    elif cmd == "vision":
+        if cfg.vision.enabled:
+            cfg.vision.enabled = False
+            _watcher.stop()
+            await reply("Vision off.")
+        else:
+            cfg.vision.enabled = True
+            ok = _watcher.start()
+            await reply("Vision on." if ok else "Vision failed to start (camera unavailable?).")
+        save_config(cfg)
+        await broadcast("vision_toggle", {"enabled": cfg.vision.enabled})
+
+    elif cmd == "sleep":
+        response = random.choice(_SLEEP_RESPONSES)
+        await broadcast("sleep", {"status": "idle", "response": response})
+        session.add("mimir", response)
+        session.end()
+        if _is_local(ws):
+            await tts.speak(response)
+        await _set_state("idle")
+        _state["wake_active"] = False
+
+    elif cmd == "help":
+        lines = "\n".join(f"  /{k}  — {v}" for k, v in _COMMANDS.items())
+        await reply(f"Available commands:\n{lines}", {"commands": _COMMANDS})
+
+    else:
+        await reply(f"Unknown command: /{cmd}. Type /help for available commands.")
 
 
 async def _set_state(status: str) -> None:
@@ -515,6 +653,11 @@ async def list_providers():
             "OLLAMA_API_KEY": bool(os.environ.get("OLLAMA_API_KEY")),
         }
     }
+
+
+@app.get("/commands")
+async def list_commands():
+    return {"commands": _COMMANDS}
 
 
 @app.get("/setup/status")

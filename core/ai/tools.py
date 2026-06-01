@@ -162,24 +162,36 @@ _TOOL_TELEGRAM_NOTIFY = {
 
 
 def get_tool_list(tools_cfg) -> list:
+    """Return all tools that are not explicitly 'never'. Brain handles ask/always at call time."""
+    if tools_cfg is None:
+        return [_TOOL_SYSTEM_HEALTH, _TOOL_WEB_SEARCH, _TOOL_DATETIME]
+
+    perms = getattr(tools_cfg, "permissions", None)
+
+    def _not_never(tool_name: str, default: str = "always") -> bool:
+        if perms is None:
+            return default != "never"
+        level = getattr(perms, tool_name, default)
+        return str(level) != "never"
+
     result = []
-    if getattr(tools_cfg, "system_health", True):
+    if _not_never("get_system_health"):
         result.append(_TOOL_SYSTEM_HEALTH)
-    if getattr(tools_cfg, "web_search", True):
+    if _not_never("web_search"):
         result.append(_TOOL_WEB_SEARCH)
-    if getattr(tools_cfg, "datetime", True):
+    if _not_never("get_datetime"):
         result.append(_TOOL_DATETIME)
-    if getattr(tools_cfg, "file_read", False):
+    if _not_never("read_file", "ask"):
         result.append(_TOOL_FILE_READ)
-    if getattr(tools_cfg, "file_write", False):
+    if _not_never("write_file", "ask"):
         result.append(_TOOL_FILE_WRITE)
-    if getattr(tools_cfg, "shell", False):
+    if _not_never("run_command", "ask"):
         result.append(_TOOL_SHELL)
-    if getattr(tools_cfg, "browser", False):
+    if _not_never("browse_web", "ask"):
         result.append(_TOOL_BROWSER)
-    if getattr(tools_cfg, "screenshot", False):
+    if _not_never("take_screenshot", "ask"):
         result.append(_TOOL_SCREENSHOT)
-    if getattr(tools_cfg, "telegram_notify", False):
+    if _not_never("notify_telegram", "ask"):
         result.append(_TOOL_TELEGRAM_NOTIFY)
     return result
 

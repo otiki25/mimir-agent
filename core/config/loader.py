@@ -1,10 +1,30 @@
 import os
 import platform
+from enum import Enum
 from pathlib import Path
 from typing import Optional
 
 import yaml
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
+
+
+class PermissionLevel(str, Enum):
+    always = "always"   # auto-approve, no dialog
+    ask    = "ask"      # ask user on first use, remember answer
+    never  = "never"    # always block
+
+
+class ToolPermissions(BaseModel):
+    """Per-tool permission levels. 'always' = safe/read-only by default."""
+    get_system_health: PermissionLevel = PermissionLevel.always
+    web_search:        PermissionLevel = PermissionLevel.always
+    get_datetime:      PermissionLevel = PermissionLevel.always
+    read_file:         PermissionLevel = PermissionLevel.ask
+    write_file:        PermissionLevel = PermissionLevel.ask
+    run_command:       PermissionLevel = PermissionLevel.ask
+    browse_web:        PermissionLevel = PermissionLevel.ask
+    take_screenshot:   PermissionLevel = PermissionLevel.ask
+    notify_telegram:   PermissionLevel = PermissionLevel.ask
 
 
 class STTConfig(BaseModel):
@@ -100,17 +120,9 @@ class VisionConfig(BaseModel):
 
 
 class ToolsConfig(BaseModel):
-    system_health: bool = True
-    web_search: bool = True
-    datetime: bool = True
-    file_read: bool = False
+    permissions: ToolPermissions = ToolPermissions()
     file_read_paths: list[str] = ["~/Documents/"]
-    file_write: bool = False
     file_write_paths: list[str] = ["~/Documents/", "/tmp/"]
-    shell: bool = False
-    browser: bool = False
-    screenshot: bool = False
-    telegram_notify: bool = False
     telegram_chat_id: str = ""
     telegram_bot_token: str = ""
 

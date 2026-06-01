@@ -68,6 +68,7 @@ class TTSEngine:
         self.engine = engine
         self.voice = voice
         self.speed = speed
+        self.enabled = True
         self._piper_voice_path: Optional[Path] = None
 
     def setup(self) -> None:
@@ -92,6 +93,8 @@ class TTSEngine:
                         log.info(f"Piper fallback voice: {voices[0].name}")
 
     async def speak(self, text: str) -> None:
+        if not self.enabled:
+            return
         text = _clean(text)
         log.info(f"Mimir speaks [{self.engine}]: {text[:80]}{'...' if len(text) > 80 else ''}")
 
