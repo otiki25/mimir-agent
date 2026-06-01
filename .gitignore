@@ -1,0 +1,40 @@
+# Config and secrets
+~/.config/mimir/
+config.yaml
+.env
+*.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+dist/
+build/
+*.egg-info/
+
+# Node
+node_modules/
+ui/dist/
+
+# Tauri / Rust
+desktop/src-tauri/target/
+
+# Models (large, download on first run)
+models/
+*.bin
+*.onnx
+*.pt
+
+# Certs
+cert/
+
+# Logs and sessions
+logs/
+sessions/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
