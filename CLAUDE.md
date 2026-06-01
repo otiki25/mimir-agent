@@ -4,6 +4,15 @@
 
 ---
 
+## Utviklingsstatus
+
+Se `ROADMAP.md` for fullstendig fase-plan med sjekkbokser.
+
+**Ferdig:** Fase 1 (Core Backend) — permission-system, slash-kommandoer, alle verktøy
+**Neste:** Fase 2 (React UI) → Fase 3 (Setup Wizard) → Fase 4 (Linux .deb) → Fase 5 (Windows)
+
+---
+
 ## What Mimir is
 
 Mimir is a local-first AI voice assistant. It runs a Python backend (FastAPI + WebSocket)
