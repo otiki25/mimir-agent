@@ -1,0 +1,90 @@
+# Mimir Agent — default configuration template
+# Copy this to ~/.config/mimir-agent/config.yaml and fill in your API key.
+# On Windows: %APPDATA%\MimirAgent\config.yaml
+
+mir:
+  name: Mimir
+  user_name: User          # Set during setup
+  wake_word: hey mimir
+  language: en
+  session_memory: true
+  greeting_enabled: true
+  personality_prompt: "You are Mimir, a calm and direct Norse wisdom keeper."
+
+voice:
+  stt:
+    engine: faster-whisper
+    model: tiny             # tiny | base | small | medium | large-v3
+    language: en
+    device: cpu
+  tts:
+    engine: edge            # edge | piper
+    voice: en-US-AriaNeural
+    speed: 1.0
+    pitch: 1.0
+  wake:
+    engine: openwakeword
+    sensitivity: 0.7
+    custom_model:
+  input:
+    mode: open_mic
+    ptt_key: Space
+
+ai:
+  primary:
+    provider: openrouter    # openrouter | openai | anthropic | ollama_cloud | ollama | lmstudio
+    base_url: https://openrouter.ai/api/v1
+    host: ""
+    model: openrouter/auto
+    api_key: ""             # Set during setup — stored in user config
+    context_length: 8192
+    temperature: 0.7
+  fallback:
+    enabled: false
+    provider: ollama
+    host: localhost:11434
+    model: llama3
+    trigger: timeout_or_error
+
+honcho:
+  enabled: false            # Optional — set to true + provide host to enable
+  host: localhost:8000
+  workspace: mimir
+  peer_id: user
+
+server:
+  host: 0.0.0.0
+  port: 8900
+  auth_token:
+
+ui:
+  theme: mimir-dark
+  hud_opacity: 0.95
+  startup_mode: fullscreen
+  show_on_wake: true
+  screen_wake_command: ""
+
+tools:
+  system_health: true
+  web_search: true
+  datetime: true
+  file_read: false
+  file_read_paths:
+    - ~/Documents/
+  file_write: false
+  file_write_paths:
+    - ~/Documents/
+    - /tmp/
+  shell: false
+  browser: false
+  screenshot: false
+  telegram_notify: false
+  telegram_chat_id: ""
+  telegram_bot_token: ""
+
+vision:
+  enabled: false
+  device: 0
+  auto_wake: true
+
+setup_complete: false
